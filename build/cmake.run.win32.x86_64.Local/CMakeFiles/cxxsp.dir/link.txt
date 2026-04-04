@@ -1,2 +1,0 @@
-C:\msys64\ucrt64\bin\ar.exe qc libcxxsp.a CMakeFiles/cxxsp.dir/src/call.cpp.obj CMakeFiles/cxxsp.dir/src/sig.cpp.obj CMakeFiles/cxxsp.dir/src/sym.cpp.obj
-C:\msys64\ucrt64\bin\ranlib.exe libcxxsp.a

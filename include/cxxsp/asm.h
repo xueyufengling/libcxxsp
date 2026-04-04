@@ -36,7 +36,7 @@ namespace cxxsp
  */
 #define __asm_inxchg__2(var_name, constraint) __asm_inxchg__3(var_name, constraint, var_name)
 #define __asm_inxchg__3(asm_var_name, constraint, value) __asm_constraint__(asm_var_name, %constraint, value)
-#define __asm_inxchg__(...) __macro_with_params__(__asm_inxchg__, __VA_ARGS__)
+#define __asm_inxchg__(...) __va_macro__(__asm_inxchg__, __VA_ARGS__)
 
 /**
  * @brief 只写的asm输出变量
@@ -50,7 +50,7 @@ namespace cxxsp
  */
 #define __asm_inout__2(var_name, constraint) __asm_inout__3(var_name, constraint, var_name)
 #define __asm_inout__3(asm_var_name, constraint, var_name) __asm_constraint__(asm_var_name, +constraint, var_name)
-#define __asm_inout__(...) __macro_with_params__(__asm_inout__, __VA_ARGS__)
+#define __asm_inout__(...) __va_macro__(__asm_inout__, __VA_ARGS__)
 
 /**
  * @brief asm拓展的列表必须写入此宏内，即输入列表、输出列表、破坏寄存器列表、跳转标签列表

@@ -2,9 +2,9 @@
 
 #include <cxxsp/arch.h>
 
-#if defined(__PLATFORM_WIN32__)
+#if defined(__OS_WIN__)
 #include <windows.h>
-#elif defined(__PLATFORM_UNIX__)
+#elif defined(__OS_UNIX__)
 #include <dlfcn.h>
 #endif
 
@@ -86,7 +86,7 @@ static int __win_find_ordinal_export_name_idx(IMAGE_DOS_HEADER* dos_header, int 
 symbol symbol::resolve(void* symbol_addr)
 {
 	symbol sym;
-#if defined(__PLATFORM_WIN32__)
+#if defined(__OS_WIN__)
 	MEMORY_BASIC_INFORMATION mbi;
 	if(::VirtualQuery(symbol_addr, &mbi, sizeof(mbi))) //查找地址所属模块
 	{
@@ -116,7 +116,7 @@ symbol symbol::resolve(void* symbol_addr)
 			}
 		}
 	}
-#elif defined(__PLATFORM_UNIX__)
+#elif defined(__OS_UNIX__)
 	Dl_info dl_info;
 	if(::dladdr(symbol_addr, &dl_info))
 	{
@@ -131,18 +131,18 @@ symbol symbol::resolve(void* symbol_addr)
 
 void symbol::free()
 {
-#if defined(__PLATFORM_WIN32__)
+#if defined(__OS_WIN__)
 	::free((void*)binary); //二进制文件路径为resolve()新分配的字符串，需要释放
-#elif defined(__PLATFORM_UNIX__)
+#elif defined(__OS_UNIX__)
 	//unix下binary、name都是内存驻留的字符串，不需要释放
 #endif
 }
 
 shared_object shared_object::dlopen(const char* so_path)
 {
-#if defined(__PLATFORM_WIN32__)
+#if defined(__OS_WIN__)
 	return shared_object(::LoadLibraryExA(so_path, NULL, DONT_RESOLVE_DLL_REFERENCES));
-#elif defined(__PLATFORM_UNIX__)
+#elif defined(__OS_UNIX__)
 	return shared_object(::dlopen(so_path, RTLD_LAZY));
 #endif
 }
@@ -151,9 +151,9 @@ void shared_object::dlclose()
 {
 	if(handle)
 	{
-#if defined(__PLATFORM_WIN32__)
+#if defined(__OS_WIN__)
 		::FreeLibrary((HMODULE)handle);
-#elif defined(__PLATFORM_UNIX__)
+#elif defined(__OS_UNIX__)
 		::dlclose(handle);
 #endif
 		handle = nullptr;
@@ -164,9 +164,9 @@ void* shared_object::dlsym(const char* symbol_name)
 {
 	if(handle)
 	{
-#if defined(__PLATFORM_WIN32__)
+#if defined(__OS_WIN__)
 		return (void*)::GetProcAddress((HMODULE)handle, symbol_name);
-#elif defined(__PLATFORM_UNIX__)
+#elif defined(__OS_UNIX__)
 	return ::dlsym(handle, symbol_name);
 #endif
 	}
@@ -178,8 +178,8 @@ void* shared_object::dlsym(const char* symbol_name)
 
 void* shared_object::base()
 {
-#if defined(__PLATFORM_WIN32__)
+#if defined(__OS_WIN__)
 	return handle; //Windows下handle就是基地址
-#elif defined(__PLATFORM_UNIX__)
+#elif defined(__OS_UNIX__)
 #endif
 }

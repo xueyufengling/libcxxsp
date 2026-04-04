@@ -5,9 +5,9 @@
 #include <malloc.h>
 #include <unwind.h>
 
-#if defined(__PLATFORM_WIN32__)
+#if defined(__OS_WIN__)
 #include <windows.h>
-#elif defined(__PLATFORM_UNIX__)
+#elif defined(__OS_UNIX__)
 #include <sys/mman.h>
 #endif
 
@@ -21,17 +21,43 @@ void* cxxsp::ip_function(void* ip)
 	return ::_Unwind_FindEnclosingFunction(ip); //Itanium ABI提供的语言无关实现
 }
 
+#if defined(__OS_WIN__)
+
+void* cxxsp::__win_teb()
+{
+#if defined(__OS_WIN32__)
+	return __rfs(0x18);
+#elif defined(__OS_WIN64__)
+	void* teb;
+	__rgs(teb, 0x30);
+	return teb;
+#endif
+}
+
+void* cxxsp::__win_peb()
+{
+#if defined(__OS_WIN32__)
+	return __rfs(0x30);
+#elif defined(__OS_WIN64__)
+	void* peb;
+	__rgs(peb, 0x60);
+	return peb;
+#endif
+}
+
+#endif
+
 exec_memory exec_memory::alloc(size_t size)
 {
 	exec_memory mem;
 	mem.mem_size = size;
-#if defined(__PLATFORM_WIN32__)
+#if defined(__OS_WIN__)
 	mem.mem = ::VirtualAlloc(
 			NULL, size,
 			MEM_COMMIT | MEM_RESERVE,
 			PAGE_EXECUTE_READWRITE
 			);
-#elif defined(__PLATFORM_UNIX__)
+#elif defined(__OS_UNIX__)
 	mem.mem= mmap(
 			NULL, size,
 			PROT_EXEC | PROT_READ | PROT_WRITE,
@@ -44,9 +70,9 @@ exec_memory exec_memory::alloc(size_t size)
 
 void exec_memory::free()
 {
-#if defined(__PLATFORM_WIN32__)
+#if defined(__OS_WIN__)
 	::VirtualFree(mem, 0, MEM_RELEASE);
-#elif defined(__PLATFORM_UNIX__)
+#elif defined(__OS_UNIX__)
 	munmap(mem, mem_size);
 #endif
 	mem = nullptr;

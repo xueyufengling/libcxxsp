@@ -2,6 +2,7 @@
 #define _CXXSP_CALL
 
 #include <stddef.h>
+#include <cxxsp/arch.h>
 
 namespace cxxsp
 {
@@ -9,6 +10,14 @@ namespace cxxsp
  * @brief 从Instruction Pointer获取该指令所属的函数的函数指针地址
  */
 extern void* ip_function(void* ip);
+
+#if defined(__OS_WIN__)
+
+extern void* __win_teb();
+
+extern void* __win_peb();
+
+#endif
 
 /**
  * @brief 拥有执行权限的内存，内存区间内的机器码可以执行。

@@ -6,11 +6,12 @@
  */
 
 #include <cxxsp/asm.h>
+#include <stdint.h>
 
 namespace cxxsp
 {
 
-#if defined(__ARCHITECTURE_X86_64__) || defined(__ARCHITECTURE_X86__)
+#if defined(__ARCH_X86_64__) || defined(__ARCH_X86__)
 /**
  * @brief 将rip或eip寄存器中的指令地址储存到C/C++变量
  * 		  ip寄存器不能直接读写，只能通过jmp写，通过pop读
@@ -109,6 +110,88 @@ namespace cxxsp
 			"movq %" __str__(src) ", %" __str__([dest])\
 		)
 
+/**
+ * @brief 读段寄存器，寄存器以%开头
+ * 		  有效段寄存器为CS, SS, DS, ES, FS, GS
+ */
+#define __stsrb__(dest, sr, off)\
+		__asm_inline__(optimized, var)(\
+			__asm_list__(),\
+			__asm_list__(__asm_in__(, r, off)),\
+			__asm_list__(__asm_out__(dest, m)),\
+			"movb %" __str__(sr) ":%0, %" __str__([dest])\
+		)
+
+/**
+ * @brief 写段寄存器
+ */
+#define __ldsrb__(sr, off, src)\
+		__asm_inline__(optimized, var)(\
+			__asm_list__(),\
+			__asm_list__(__asm_in__(, r, off), __asm_in__(, r, (uint8_t)src)),\
+			__asm_list__(),\
+			"movb %1, %" __str__(sr) ":%0"\
+		)
+
+#define __stsrw__(dest, sr, off)\
+		__asm_inline__(optimized, var)(\
+			__asm_list__(),\
+			__asm_list__(__asm_in__(, r, off)),\
+			__asm_list__(__asm_out__(dest, m)),\
+			"movw %" __str__(sr) ":%0, %" __str__([dest])\
+		)
+
+#define __ldsrw__(sr, off, src)\
+		__asm_inline__(optimized, var)(\
+			__asm_list__(),\
+			__asm_list__(__asm_in__(, r, off), __asm_in__(, r, (uint16_t)src)),\
+			__asm_list__(),\
+			"movw %1, %" __str__(sr) ":%0"\
+		)
+
+#define __stsrl__(dest, sr, off)\
+		__asm_inline__(optimized, var)(\
+			__asm_list__(),\
+			__asm_list__(__asm_in__(, r, off)),\
+			__asm_list__(__asm_out__(dest, m)),\
+			"movl %" __str__(sr) ":%0, %" __str__([dest])\
+		)
+
+#define __ldsrl__(sr, off, src)\
+		__asm_inline__(optimized, var)(\
+			__asm_list__(),\
+			__asm_list__(__asm_in__(, r, off), __asm_in__(, r, (uint32_t)src)),\
+			__asm_list__(),\
+			"movl %1, %" __str__(sr) ":%0"\
+		)
+
+#define __stsrq__(dest, sr, off)\
+		__asm_inline__(optimized, var)(\
+			__asm_list__(),\
+			__asm_list__(__asm_in__(, r, off)),\
+			__asm_list__(__asm_out__(, r, dest)),\
+			"movq %" __str__(sr) ":%1, %0"\
+		)
+
+#define __ldsrq__(sr, off, src)\
+		__asm_inline__(optimized, var)(\
+			__asm_list__(),\
+			__asm_list__(__asm_in__(, r, off), __asm_in__(, r, (uint64_t)src)),\
+			__asm_list__(),\
+			"movq %1, %" __str__(sr) ":%0"\
+		)
+
+/**
+ * @brief 立即数访问段寄存器。读取GS段寄存器不支持寄存器间接寻址，只能使用立即数。
+ */
+#define __stsriq__(dest, sr, off)\
+		__asm_inline__(optimized, var)(\
+			__asm_list__(),\
+			__asm_list__(__asm_in__(, i, off)),\
+			__asm_list__(__asm_out__(, r, dest)),\
+			"movq %" __str__(sr) ":%1, %0"\
+		)
+
 #endif
 
 /**
@@ -116,7 +199,7 @@ namespace cxxsp
  * @detail	待比较的期望值必须送入寄存器a，这是因为cmpxchg指令的比较操作数只从寄存器a取。src操作数必须是寄存器
  * 			注：不使用inline函数是因为inline函数虽然内联函数体，但每个inline内联展开的参数和局部变量都会独立地、额外地占用栈空间，且也会进行对这些栈内存进行初始化和参数传递，从而生成一堆不必要的mov指令
  */
-#if defined(__ARCHITECTURE_X86_64__) || defined(__ARCHITECTURE_X86__)
+#if defined(__ARCH_X86_64__) || defined(__ARCH_X86__)
 #define __cmpxchgb__(dest, expected, src, prev)\
 		__asm_inline__(volatile, var)(\
 				__asm_list__("memory", "cc"),\
@@ -215,11 +298,11 @@ __attribute__((always_inline)) inline void __rwmb(void)
 			__asm_list__("memory"),
 			__asm_list__(),
 			__asm_list__(),
-#if defined(__ARCHITECTURE_X86_64__) || defined(__ARCHITECTURE_X86__)
+#if defined(__ARCH_X86_64__) || defined(__ARCH_X86__)
 			"mfence"
-#elif defined(__ARCHITECTURE_AARCH_64__)
+#elif defined(__ARCH_AARCH_64__)
 			"dmb sy"
-#elif defined(__ARCHITECTURE_POWERPC_64__)
+#elif defined(__ARCH_POWERPC_64__)
 			"lwsync"
 #else
 			static_assert(false, "no full memory barrier instruction for current architecture");
@@ -236,9 +319,9 @@ __attribute__((always_inline)) inline void __rmb(void)
 			__asm_list__("memory"),
 			__asm_list__(),
 			__asm_list__(),
-#if defined(__ARCHITECTURE_X86_64__) || defined(__ARCHITECTURE_X86__)
+#if defined(__ARCH_X86_64__) || defined(__ARCH_X86__)
 			"lfence"
-#elif defined(__ARCHITECTURE_AARCH_64__)
+#elif defined(__ARCH_AARCH_64__)
 			"dmb ld"
 #else
 			static_assert(false, "no read memory barrier instruction for current architecture");
@@ -255,9 +338,9 @@ __attribute__((always_inline)) inline void __wmb(void)
 			__asm_list__("memory"),
 			__asm_list__(),
 			__asm_list__(),
-#if defined(__ARCHITECTURE_X86_64__) || defined(__ARCHITECTURE_X86__)
+#if defined(__ARCH_X86_64__) || defined(__ARCH_X86__)
 			"sfence"
-#elif defined(__ARCHITECTURE_AARCH_64__)
+#elif defined(__ARCH_AARCH_64__)
 			"dmb st"
 #else
 			static_assert(false, "no write memory barrier instruction for current architecture");
@@ -272,9 +355,9 @@ __attribute__((always_inline)) inline void __wmb(void)
 __attribute__((always_inline)) inline void* __ip()
 {
 	void* ip;
-#if defined(__ARCHITECTURE_X86_64__) || defined(__ARCHITECTURE_X86__)
+#if defined(__ARCH_X86_64__) || defined(__ARCH_X86__)
 	__rip__(ip);
-#elif defined(__ARCHITECTURE_AARCH_64__)
+#elif defined(__ARCH_AARCH_64__)
 	__stq__(ip, %pc);
 #endif
 	return ip;
@@ -283,6 +366,57 @@ __attribute__((always_inline)) inline void* __ip()
 __attribute__((always_inline)) inline void __jmp(void* target_ip)
 {
 	__jmp__(target_ip);
+}
+
+/**
+ * @brief 读FS寄存器
+ */
+__attribute__((always_inline)) inline void* __rfs(uint64_t offset)
+{
+	void* fsv;
+#if defined(__ARCH_X86_64__)
+	__stsrq__(fsv, %fs, offset);
+#elif defined(__ARCH_X86__)
+	__stsrl__(fsv, %fs, offset);
+#elif defined(__ARCH_AARCH_64__)
+
+#endif
+	return fsv;
+}
+
+/**
+ * @brief 写FS寄存器
+ */
+__attribute__((always_inline)) inline void __wfs(uint64_t offset, void* value)
+{
+#if defined(__ARCH_X86_64__)
+	__ldsrq__(%fs, offset, value);
+#elif defined(__ARCH_X86__)
+	__ldsrl__(%fs, offset, value);
+#elif defined(__ARCH_AARCH_64__)
+
+#endif
+}
+
+/**
+ * @brief 读GS寄存器
+ */
+#if defined(__ARCH_X86_64__)
+#define __rgs(gsv, offset) __stsriq__(gsv, %gs, offset);
+#endif
+
+/**
+ * @brief 写GS寄存器
+ */
+__attribute__((always_inline)) inline void __wgs(uint64_t offset, void* value)
+{
+#if defined(__ARCH_X86_64__)
+	__ldsrq__(%gs, offset, value);
+#elif defined(__ARCH_X86__)
+	__ldsrl__(%gs, offset, value);
+#elif defined(__ARCH_AARCH_64__)
+
+#endif
 }
 
 /**
@@ -322,11 +456,11 @@ typedef struct frame
 __attribute__((always_inline)) inline frame* __bp()
 {
 	frame* bottom;
-#if defined(__ARCHITECTURE_X86_64__)
+#if defined(__ARCH_X86_64__)
 	__stq__(bottom, %rbp);
-#elif defined(__ARCHITECTURE_X86__)
+#elif defined(__ARCH_X86__)
 	__stl__(bottom, %ebp);
-#elif defined(__ARCHITECTURE_AARCH_64__)
+#elif defined(__ARCH_AARCH_64__)
 	__stq__(bottom, %fp);
 #endif
 	return bottom;
@@ -340,11 +474,11 @@ __attribute__((always_inline)) inline frame* __bp()
 __attribute__((always_inline)) inline void* __sp()
 {
 	void* top;
-#if defined(__ARCHITECTURE_X86_64__)
+#if defined(__ARCH_X86_64__)
 	__stq__(top, %rsp);
-#elif defined(__ARCHITECTURE_X86__)
+#elif defined(__ARCH_X86__)
 	__stl__(top, %esp);
-#elif defined(__ARCHITECTURE_AARCH_64__)
+#elif defined(__ARCH_AARCH_64__)
 	__stq__(top, %sp);
 #endif
 	return top;
