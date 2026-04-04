@@ -173,29 +173,29 @@ cxxsp/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\cxxsp.dir\build.make CMakeFiles/cxxsp.dir/build
 .PHONY : cxxsp/fast
 
-src/call_stack.obj: src/call_stack.cpp.obj
-.PHONY : src/call_stack.obj
+src/call.obj: src/call.cpp.obj
+.PHONY : src/call.obj
 
 # target to build an object file
-src/call_stack.cpp.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\cxxsp.dir\build.make CMakeFiles/cxxsp.dir/src/call_stack.cpp.obj
-.PHONY : src/call_stack.cpp.obj
+src/call.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\cxxsp.dir\build.make CMakeFiles/cxxsp.dir/src/call.cpp.obj
+.PHONY : src/call.cpp.obj
 
-src/call_stack.i: src/call_stack.cpp.i
-.PHONY : src/call_stack.i
+src/call.i: src/call.cpp.i
+.PHONY : src/call.i
 
 # target to preprocess a source file
-src/call_stack.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\cxxsp.dir\build.make CMakeFiles/cxxsp.dir/src/call_stack.cpp.i
-.PHONY : src/call_stack.cpp.i
+src/call.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\cxxsp.dir\build.make CMakeFiles/cxxsp.dir/src/call.cpp.i
+.PHONY : src/call.cpp.i
 
-src/call_stack.s: src/call_stack.cpp.s
-.PHONY : src/call_stack.s
+src/call.s: src/call.cpp.s
+.PHONY : src/call.s
 
 # target to generate assembly for a file
-src/call_stack.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\cxxsp.dir\build.make CMakeFiles/cxxsp.dir/src/call_stack.cpp.s
-.PHONY : src/call_stack.cpp.s
+src/call.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\cxxsp.dir\build.make CMakeFiles/cxxsp.dir/src/call.cpp.s
+.PHONY : src/call.cpp.s
 
 src/sig.obj: src/sig.cpp.obj
 .PHONY : src/sig.obj
@@ -258,9 +258,9 @@ help:
 	@echo ... list_install_components
 	@echo ... rebuild_cache
 	@echo ... cxxsp
-	@echo ... src/call_stack.obj
-	@echo ... src/call_stack.i
-	@echo ... src/call_stack.s
+	@echo ... src/call.obj
+	@echo ... src/call.i
+	@echo ... src/call.s
 	@echo ... src/sig.obj
 	@echo ... src/sig.i
 	@echo ... src/sig.s

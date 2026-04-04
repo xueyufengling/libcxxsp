@@ -1,6 +1,6 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/cxxsp.dir/src/call_stack.cpp.obj"
-  "CMakeFiles/cxxsp.dir/src/call_stack.cpp.obj.d"
+  "CMakeFiles/cxxsp.dir/src/call.cpp.obj"
+  "CMakeFiles/cxxsp.dir/src/call.cpp.obj.d"
   "CMakeFiles/cxxsp.dir/src/sig.cpp.obj"
   "CMakeFiles/cxxsp.dir/src/sig.cpp.obj.d"
   "CMakeFiles/cxxsp.dir/src/sym.cpp.obj"

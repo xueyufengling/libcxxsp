@@ -1,10 +1,16 @@
-#include <cxxsp/call_stack.h>
+#include <cxxsp/call.h>
 
 #include <cxxsp/asm_def.h>
 
 #include <malloc.h>
 #include <unwind.h>
-#include<iostream>
+
+#if defined(__PLATFORM_WIN32__)
+#include <windows.h>
+#elif defined(__PLATFORM_UNIX__)
+#include <sys/mman.h>
+#endif
+
 using namespace cxxsp;
 
 /**
@@ -13,6 +19,38 @@ using namespace cxxsp;
 void* cxxsp::ip_function(void* ip)
 {
 	return ::_Unwind_FindEnclosingFunction(ip); //Itanium ABI提供的语言无关实现
+}
+
+exec_memory exec_memory::alloc(size_t size)
+{
+	exec_memory mem;
+	mem.mem_size = size;
+#if defined(__PLATFORM_WIN32__)
+	mem.mem = ::VirtualAlloc(
+			NULL, size,
+			MEM_COMMIT | MEM_RESERVE,
+			PAGE_EXECUTE_READWRITE
+			);
+#elif defined(__PLATFORM_UNIX__)
+	mem.mem= mmap(
+			NULL, size,
+			PROT_EXEC | PROT_READ | PROT_WRITE,
+			MAP_PRIVATE | MAP_ANONYMOUS,
+			-1, 0
+	);
+#endif
+	return mem;
+}
+
+void exec_memory::free()
+{
+#if defined(__PLATFORM_WIN32__)
+	::VirtualFree(mem, 0, MEM_RELEASE);
+#elif defined(__PLATFORM_UNIX__)
+	munmap(mem, mem_size);
+#endif
+	mem = nullptr;
+	mem_size = 0;
 }
 
 /**

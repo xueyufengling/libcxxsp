@@ -8,7 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "D:/libcxxsp/src/call_stack.cpp" "CMakeFiles/cxxsp.dir/src/call_stack.cpp.obj" "gcc" "CMakeFiles/cxxsp.dir/src/call_stack.cpp.obj.d"
+  "D:/libcxxsp/src/call.cpp" "CMakeFiles/cxxsp.dir/src/call.cpp.obj" "gcc" "CMakeFiles/cxxsp.dir/src/call.cpp.obj.d"
   "D:/libcxxsp/src/sig.cpp" "CMakeFiles/cxxsp.dir/src/sig.cpp.obj" "gcc" "CMakeFiles/cxxsp.dir/src/sig.cpp.obj.d"
   "D:/libcxxsp/src/sym.cpp" "CMakeFiles/cxxsp.dir/src/sym.cpp.obj" "gcc" "CMakeFiles/cxxsp.dir/src/sym.cpp.obj.d"
   )

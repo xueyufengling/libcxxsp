@@ -1,5 +1,7 @@
-#ifndef _CXXSP_CALLSTACK
-#define _CXXSP_CALLSTACK
+#ifndef _CXXSP_CALL
+#define _CXXSP_CALL
+
+#include <stddef.h>
 
 namespace cxxsp
 {
@@ -7,6 +9,35 @@ namespace cxxsp
  * @brief 从Instruction Pointer获取该指令所属的函数的函数指针地址
  */
 extern void* ip_function(void* ip);
+
+/**
+ * @brief 拥有执行权限的内存，内存区间内的机器码可以执行。
+ * 		  标准库的内存分配只能分配具有RW权限的数据内存，无法分配具有E权限的可执行内存，这必须依赖操作系统API。
+ */
+class exec_memory
+{
+private:
+	void* mem = nullptr;
+	size_t mem_size = 0;
+
+	exec_memory() = default;
+
+public:
+	static exec_memory alloc(size_t size);
+
+	template<typename _T>
+	inline operator _T*()
+	{
+		return (_T*)mem;
+	}
+
+	inline size_t size()
+	{
+		return mem_size;
+	}
+
+	void free();
+};
 
 /**
  * @brief 栈帧回溯
@@ -113,4 +144,4 @@ public:
 
 }
 
-#endif //_CXXSP_CALLSTACK
+#endif //_CXXSP_CALL

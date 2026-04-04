@@ -24,6 +24,65 @@ char* cxxsp::cxx_name_demangling(const char* mangled_name)
 		return name;
 }
 
+/**
+ * @brief Windows系统查找一个偏移量对应的导出符号的序号
+ * @param export_entries 导出条目的指针
+ * @param 目标偏移量，即符号地址-dll加载基地址
+ */
+static int __win_find_addr_export_ordinal(IMAGE_DOS_HEADER* dos_header, long long target_offset)
+{
+	unsigned char* base = (unsigned char*)dos_header;
+	IMAGE_NT_HEADERS* nt_header = (IMAGE_NT_HEADERS*)(base + dos_header->e_lfanew); //base指针实际指向DOS头，通过DOS头访问NT头
+	DWORD exprot_entry_offset = nt_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
+	if(exprot_entry_offset) //有导出表
+	{
+		IMAGE_EXPORT_DIRECTORY* export_entries = (IMAGE_EXPORT_DIRECTORY*)(base + exprot_entry_offset);
+		DWORD* sym_addrs = (DWORD*)(base + export_entries->AddressOfFunctions); //导出的全部函数、变量偏移量，采用的索引是AddressOfNameOrdinals中储存的序号
+		DWORD sym_count = export_entries->NumberOfFunctions; //导出的地址个数
+		DWORD match_offset = 0; //最佳匹配的符号偏移量
+		int match_ordinal = -1;
+		for(DWORD sym_ordinal = 0; sym_ordinal < sym_count; ++sym_ordinal) //必须遍历全部符号，符号地址可能是乱序的
+		{
+			DWORD current_sym = sym_addrs[sym_ordinal];
+			if(match_offset < current_sym && current_sym <= target_offset) //判断符号地址位于哪个导出符号的区间
+			{
+				match_offset = current_sym;
+				match_ordinal = sym_ordinal;
+			}
+		}
+		return match_ordinal;
+	}
+	else
+	{
+		return -1;
+	}
+}
+
+static int __win_find_ordinal_export_name_idx(IMAGE_DOS_HEADER* dos_header, int ordinal)
+{
+	unsigned char* base = (unsigned char*)dos_header;
+	IMAGE_NT_HEADERS* nt_header = (IMAGE_NT_HEADERS*)(base + dos_header->e_lfanew);
+	DWORD exprot_entry_offset = nt_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
+	if(exprot_entry_offset) //有导出表
+	{
+		IMAGE_EXPORT_DIRECTORY* export_entries = (IMAGE_EXPORT_DIRECTORY*)(base + exprot_entry_offset);
+		DWORD name_count = export_entries->NumberOfNames; //导出的名称个数
+		USHORT* ordinals = (USHORT*)(base + export_entries->AddressOfNameOrdinals); //导出的符号序号，16位无符号整数，索引采用字典序，对应的值是ordinal
+		for(int ascii_idx = 0; ascii_idx < name_count; ++ascii_idx)
+		{
+			if(ordinals[ascii_idx] == ordinal)
+			{
+				return ascii_idx;
+			}
+		}
+		return -1; //未找到
+	}
+	else
+	{
+		return -1;
+	}
+}
+
 symbol symbol::resolve(void* symbol_addr)
 {
 	symbol sym;
@@ -39,39 +98,21 @@ symbol symbol::resolve(void* symbol_addr)
 		char* bin_path = (char*)malloc(bin_path_len + 1);
 		bin_path[bin_path_len] = '\0';
 		sym.binary = strcpy(bin_path, bin_path_buf);
-		IMAGE_NT_HEADERS* nt = (IMAGE_NT_HEADERS*)(base + ((IMAGE_DOS_HEADER*)base)->e_lfanew); //base指针实际指向DOS头，通过DOS头访问NT头
-		DWORD exprot_entry_offset = nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
+		IMAGE_NT_HEADERS* nt_header = (IMAGE_NT_HEADERS*)(base + ((IMAGE_DOS_HEADER*)base)->e_lfanew); //base指针实际指向DOS头，通过DOS头访问NT头
+		DWORD exprot_entry_offset = nt_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
 		if(exprot_entry_offset) //有导出表
 		{
 			IMAGE_EXPORT_DIRECTORY* export_entries = (IMAGE_EXPORT_DIRECTORY*)(base + exprot_entry_offset);
-			DWORD* sym_addrs = (DWORD*)(base + export_entries->AddressOfFunctions); //导出的全部函数、变量偏移量，采用的索引是AddressOfNameOrdinals中储存的序号
-			DWORD sym_count = export_entries->NumberOfFunctions; //导出的地址个数
-			DWORD target_offset = (unsigned char*)symbol_addr - base; //目标符号地址的偏移量
-			DWORD match_offset = 0; //最佳匹配的符号偏移量
-			DWORD match_ordinal = 0;
-			for(DWORD sym_ordinal = 0; sym_ordinal < sym_count; ++sym_ordinal) //必须遍历全部符号，符号地址可能是乱序的
+			int match_ordinal = __win_find_addr_export_ordinal((IMAGE_DOS_HEADER*)base, (unsigned char*)symbol_addr - base);
+			if(match_ordinal >= 0)
 			{
-				DWORD current_sym = sym_addrs[sym_ordinal];
-				if(match_offset < current_sym && current_sym <= target_offset) //判断符号地址位于哪个导出符号的区间
+				sym.address = base + ((DWORD*)(base + export_entries->AddressOfFunctions))[match_ordinal]; //加载基地址+符号偏移量
+				int ascii_idx = __win_find_ordinal_export_name_idx((IMAGE_DOS_HEADER*)base, match_ordinal);
+				if(ascii_idx >= 0)
 				{
-					match_offset = current_sym;
-					match_ordinal = sym_ordinal;
-				}
-			}
-			if(match_offset)
-			{
-				sym.address = base + match_offset;
-				DWORD* name_addrs = (DWORD*)(base + export_entries->AddressOfNames); //导出的全部函数、变量名称偏移量，索引采用ASCII字典序而不是ordinal
-				DWORD name_count = export_entries->NumberOfNames; //导出的名称个数
-				USHORT* ordinals = (USHORT*)(base + export_entries->AddressOfNameOrdinals); //导出的符号序号，16位无符号整数，索引采用字典序，对应的值是ordinal
-				for(DWORD ascii_idx = 0; ascii_idx < name_count; ++ascii_idx)
-				{
-					if(ordinals[ascii_idx] == match_ordinal)
-					{
-						sym.name = (const char*)(base + name_addrs[ascii_idx]); //直接返回库内存驻留的名称，而不是重新分配
-						break;
-					}
-				}
+					//AddressOfNames为导出的全部函数、变量名称偏移量，索引采用ASCII字典序而不是ordinal
+					sym.name = (const char*)(base + ((DWORD*)(base + export_entries->AddressOfNames))[ascii_idx]); //直接返回库内存驻留的名称，而不是重新分配
+				};
 			}
 		}
 	}
