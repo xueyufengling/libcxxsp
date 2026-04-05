@@ -23,26 +23,45 @@ void* cxxsp::ip_function(void* ip)
 
 #if defined(__OS_WIN__)
 
-void* cxxsp::__win_teb()
+TEB* cxxsp::__win_teb()
 {
 #if defined(__OS_WIN32__)
-	return __rfs(0x18);
+	return (TEB*)__rfs(0x18);
 #elif defined(__OS_WIN64__)
-	void* teb;
-	__rgs(teb, 0x30);
-	return teb;
+	return (TEB*)__rgs(0x30);
 #endif
 }
 
-void* cxxsp::__win_peb()
+PEB* cxxsp::__win_peb()
 {
 #if defined(__OS_WIN32__)
-	return __rfs(0x30);
+	return (PEB*)__rfs(0x30);
 #elif defined(__OS_WIN64__)
-	void* peb;
-	__rgs(peb, 0x60);
-	return peb;
+	return (PEB*)__rgs(0x60);
 #endif
+}
+
+LDR_DATA_TABLE_ENTRY* cxxsp::__win_peb_load_order_module(PEB* peb, int load_order)
+{
+	/**
+	 * [Type: _PEB_LDR_DATA *]
+	 * [+0x000] Length           : 0x58 [Type: unsigned long]
+	 * [+0x004] Initialized      : 0x1 [Type: unsigned char]
+	 * [+0x008] SsHandle         : 0x0 [Type: void *]
+	 * [+0x010] InLoadOrderModuleList [Type: _LIST_ENTRY]
+	 * [+0x020] InMemoryOrderModuleList [Type: _LIST_ENTRY]
+	 * [+0x030] InInitializationOrderModuleList [Type: _LIST_ENTRY]
+	 * [+0x040] EntryInProgress  : 0x0 [Type: void *]
+	 * [+0x048] ShutdownInProgress : 0x0 [Type: unsigned char]
+	 * [+0x050] ShutdownThreadId : 0x0 [Type: void *]
+	 */
+	LIST_ENTRY& InLoadOrderModuleList = *(LIST_ENTRY*)((unsigned char*)&peb->Ldr->InMemoryOrderModuleList - sizeof(LIST_ENTRY)); //InLoadOrderModuleList未公开，需要根据WinDbg查看的实际结构体手动计算偏移量
+	LIST_ENTRY* module = InLoadOrderModuleList.Flink;
+	for(int idx = 0; idx < load_order; ++idx)
+	{
+		module = module->Flink;
+	}
+	return (LDR_DATA_TABLE_ENTRY*)module; //直接将链表指针强转即可
 }
 
 #endif
@@ -53,9 +72,9 @@ exec_memory exec_memory::alloc(size_t size)
 	mem.mem_size = size;
 #if defined(__OS_WIN__)
 	mem.mem = ::VirtualAlloc(
-			NULL, size,
-			MEM_COMMIT | MEM_RESERVE,
-			PAGE_EXECUTE_READWRITE
+	NULL, size,
+	MEM_COMMIT | MEM_RESERVE,
+	PAGE_EXECUTE_READWRITE
 			);
 #elif defined(__OS_UNIX__)
 	mem.mem= mmap(

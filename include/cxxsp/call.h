@@ -4,6 +4,10 @@
 #include <stddef.h>
 #include <cxxsp/arch.h>
 
+#if defined(__OS_WIN__)
+#include <winternl.h>
+#endif
+
 namespace cxxsp
 {
 /**
@@ -13,9 +17,20 @@ extern void* ip_function(void* ip);
 
 #if defined(__OS_WIN__)
 
-extern void* __win_teb();
+/**
+ * @brief 本进程的TEB，线程环境块
+ */
+extern TEB* __win_teb();
 
-extern void* __win_peb();
+/**
+ * @brief 本进程的PEB，进程环境块
+ */
+extern PEB* __win_peb();
+
+/**
+ * @brief 获取进程加载的指定索引的模块，按照加载顺序。
+ */
+extern LDR_DATA_TABLE_ENTRY* __win_peb_load_order_module(PEB* peb, int load_order);
 
 #endif
 

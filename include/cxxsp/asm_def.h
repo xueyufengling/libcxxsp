@@ -19,10 +19,10 @@ namespace cxxsp
 #define __rip__(dest)\
 		__asm_inline__(optimized, var)(\
 			__asm_list__(),\
-			__asm_list__(),\
 			__asm_list__(__asm_out__(dest, m)),\
+			__asm_list__(),\
 			"call 1f",\
-			"1: pop %" __str__([dest])\
+			"1: pop %" __asm_var__(dest)\
 		)
 
 /**
@@ -31,8 +31,8 @@ namespace cxxsp
 #define __jmp__(dest)\
 		__asm_inline__(optimized, var)(\
 			__asm_list__(),\
-			__asm_list__(__asm_in__(, r, (void*)dest)),\
 			__asm_list__(),\
+			__asm_list__(__asm_inp__(r, (void*)dest)),\
 			"jmp *%0"\
 		)
 
@@ -44,33 +44,33 @@ namespace cxxsp
 #define __ldb__(dest, src)\
 		__asm_inline__(optimized, var)(\
 			__asm_list__(),\
-			__asm_list__(__asm_in__(_mov_src, r, (uint8_t)src)),\
 			__asm_list__(),\
-			"movb %[_mov_src], %" __str__(dest)\
+			__asm_list__(__asm_inp__(r, (uint8_t)src)),\
+			"movb %0, %" __str__(dest)\
 		)
 
 #define __ldw__(dest, src)\
 		__asm_inline__(optimized, var)(\
 			__asm_list__(),\
-			__asm_list__(__asm_in__(_mov_src, r, (uint16_t)src)),\
 			__asm_list__(),\
-			"movw %[_mov_src], %" __str__(dest)\
+			__asm_list__(__asm_inp__(r, (uint16_t)src)),\
+			"movw %0, %" __str__(dest)\
 		)
 
 #define __ldl__(dest, src)\
 		__asm_inline__(optimized, var)(\
 			__asm_list__(),\
-			__asm_list__(__asm_in__(_mov_src, r, (uint32_t)src)),\
 			__asm_list__(),\
-			"movl %[_mov_src], %" __str__(dest)\
+			__asm_list__(__asm_inp__(r, (uint32_t)src)),\
+			"movl %0, %" __str__(dest)\
 		)
 
 #define __ldq__(dest, src)\
 		__asm_inline__(optimized, var)(\
 			__asm_list__(),\
-			__asm_list__(__asm_in__(_mov_src, r, (uint64_t)src)),\
 			__asm_list__(),\
-			"movq %[_mov_src], %" __str__(dest)\
+			__asm_list__(__asm_inp__(r, (uint64_t)src)),\
+			"movq %0, %" __str__(dest)\
 		)
 
 /**
@@ -81,33 +81,33 @@ namespace cxxsp
 #define __stb__(dest, src)\
 		__asm_inline__(volatile, var)(\
 			__asm_list__(),\
-			__asm_list__(),\
 			__asm_list__(__asm_out__(dest, m)),\
-			"movb %" __str__(src) ", %" __str__([dest])\
+			__asm_list__(),\
+			"movb %" __str__(src) ", %" __asm_var__(dest)\
 		)
 
 #define __stw__(dest, src)\
 		__asm_inline__(volatile, var)(\
 			__asm_list__(),\
-			__asm_list__(),\
 			__asm_list__(__asm_out__(dest, m)),\
-			"movw %" __str__(src) ", %" __str__([dest])\
+			__asm_list__(),\
+			"movw %" __str__(src) ", %" __asm_var__(dest)\
 		)
 
 #define __stl__(dest, src)\
 		__asm_inline__(volatile, var)(\
 			__asm_list__(),\
-			__asm_list__(),\
 			__asm_list__(__asm_out__(dest, m)),\
-			"movl %" __str__(src) ", %" __str__([dest])\
+			__asm_list__(),\
+			"movl %" __str__(src) ", %" __asm_var__(dest)\
 		)
 
 #define __stq__(dest, src)\
 		__asm_inline__(volatile, var)(\
 			__asm_list__(),\
-			__asm_list__(),\
 			__asm_list__(__asm_out__(dest, m)),\
-			"movq %" __str__(src) ", %" __str__([dest])\
+			__asm_list__(),\
+			"movq %" __str__(src) ", %" __asm_var__(dest)\
 		)
 
 /**
@@ -117,9 +117,9 @@ namespace cxxsp
 #define __stsrb__(dest, sr, off)\
 		__asm_inline__(optimized, var)(\
 			__asm_list__(),\
-			__asm_list__(__asm_in__(, r, off)),\
 			__asm_list__(__asm_out__(dest, m)),\
-			"movb %" __str__(sr) ":%0, %" __str__([dest])\
+			__asm_list__(__asm_inp__(m, off)),\
+			"movb %" __str__(sr) ":%0, %" __asm_var__(dest)\
 		)
 
 /**
@@ -128,68 +128,79 @@ namespace cxxsp
 #define __ldsrb__(sr, off, src)\
 		__asm_inline__(optimized, var)(\
 			__asm_list__(),\
-			__asm_list__(__asm_in__(, r, off), __asm_in__(, r, (uint8_t)src)),\
 			__asm_list__(),\
+			__asm_list__(__asm_inp__(m, off), __asm_inp__(m, (uint8_t)src)),\
 			"movb %1, %" __str__(sr) ":%0"\
 		)
 
 #define __stsrw__(dest, sr, off)\
 		__asm_inline__(optimized, var)(\
 			__asm_list__(),\
-			__asm_list__(__asm_in__(, r, off)),\
 			__asm_list__(__asm_out__(dest, m)),\
-			"movw %" __str__(sr) ":%0, %" __str__([dest])\
+			__asm_list__(__asm_inp__(m, off)),\
+			"movw %" __str__(sr) ":%0, %" __asm_var__(dest)\
 		)
 
 #define __ldsrw__(sr, off, src)\
 		__asm_inline__(optimized, var)(\
 			__asm_list__(),\
-			__asm_list__(__asm_in__(, r, off), __asm_in__(, r, (uint16_t)src)),\
 			__asm_list__(),\
+			__asm_list__(__asm_inp__(m, off), __asm_inp__(m, (uint16_t)src)),\
 			"movw %1, %" __str__(sr) ":%0"\
 		)
 
 #define __stsrl__(dest, sr, off)\
 		__asm_inline__(optimized, var)(\
 			__asm_list__(),\
-			__asm_list__(__asm_in__(, r, off)),\
 			__asm_list__(__asm_out__(dest, m)),\
-			"movl %" __str__(sr) ":%0, %" __str__([dest])\
+			__asm_list__(__asm_inp__(m, off)),\
+			"movl %" __str__(sr) ":%0, %" __asm_var__(dest)\
 		)
 
 #define __ldsrl__(sr, off, src)\
 		__asm_inline__(optimized, var)(\
 			__asm_list__(),\
-			__asm_list__(__asm_in__(, r, off), __asm_in__(, r, (uint32_t)src)),\
 			__asm_list__(),\
+			__asm_list__(__asm_inp__(m, off), __asm_inp__(m, (uint32_t)src)),\
 			"movl %1, %" __str__(sr) ":%0"\
 		)
 
 #define __stsrq__(dest, sr, off)\
 		__asm_inline__(optimized, var)(\
 			__asm_list__(),\
-			__asm_list__(__asm_in__(, r, off)),\
-			__asm_list__(__asm_out__(, r, dest)),\
+			__asm_list__(__asm_outp__(r, dest)),\
+			__asm_list__(__asm_inp__(m, off)),\
 			"movq %" __str__(sr) ":%1, %0"\
 		)
 
 #define __ldsrq__(sr, off, src)\
 		__asm_inline__(optimized, var)(\
 			__asm_list__(),\
-			__asm_list__(__asm_in__(, r, off), __asm_in__(, r, (uint64_t)src)),\
 			__asm_list__(),\
+			__asm_list__(__asm_inp__(m, off), __asm_inp__(m, (uint64_t)src)),\
 			"movq %1, %" __str__(sr) ":%0"\
 		)
 
 /**
- * @brief 立即数访问段寄存器。读取GS段寄存器不支持寄存器间接寻址，只能使用立即数。
+ * @brief 32位寻址访问段寄存器。
+ * 		  在64位模式下，FS段寄存器和GS段寄存器寻址方式不同，读取GS段寄存器只能使用32位寄存器间接寻址，即使用eax等32位寄存器。且输出也必须是寄存器不能是内存地址。
  */
-#define __stsriq__(dest, sr, off)\
+#define __stsrq32__(dest, sr, off)\
 		__asm_inline__(optimized, var)(\
-			__asm_list__(),\
-			__asm_list__(__asm_in__(, i, off)),\
-			__asm_list__(__asm_out__(, r, dest)),\
-			"movq %" __str__(sr) ":%1, %0"\
+			__asm_list__("eax"),\
+			__asm_list__(__asm_outp__(r, dest)),\
+			__asm_list__(__asm_inp__(m, off)),\
+			"movl %1, %%eax",\
+			"movq %" __str__(sr) ":(%%eax), %0"\
+		)
+
+#define __stsrl32__(dest, sr, off)\
+		__asm_inline__(optimized, var)(\
+			__asm_list__("eax"),\
+			__asm_list__(__asm_outp__(r, dest)),\
+			__asm_list__(__asm_inp__(m, off)),\
+			"movl %1, %%eax",\
+			"movl %" __str__(sr) ":(%%eax), %0"\
 		)
 
 #endif
@@ -203,73 +214,73 @@ namespace cxxsp
 #define __cmpxchgb__(dest, expected, src, prev)\
 		__asm_inline__(volatile, var)(\
 				__asm_list__("memory", "cc"),\
-				__asm_list__(__asm_in__(_expected, a, (uint8_t)expected), __asm_in__(_src, r, (uint8_t)src)),\
-				__asm_list__(__asm_inout__(_dest, m, dest), __asm_out__(_prev, m, prev)),\
-				"lock cmpxchgb %[_src], %[_dest]",\
-				"movb %%al, %[_prev]"\
+				__asm_list__(__asm_inout__(dest, m), __asm_out__(prev, m)),\
+				__asm_list__(__asm_in__(expected, a), __asm_in__(src, r)),\
+				"lock cmpxchgb %" __asm_var__(src) ", %" __asm_var__(dest),\
+				"movb %%al, %" __asm_var__(prev)\
 		)
 
 #define __casb__(dest, expected, src, success)\
 		__asm_inline__(volatile, var)(\
 				__asm_list__("memory", "cc"),\
-				__asm_list__(__asm_in__(_expected, a, (uint8_t)expected), __asm_in__(_src, r, (uint8_t)src)),\
-				__asm_list__(__asm_inout__(_dest, m, dest), __asm_out__(_success, m, success)),\
-				"lock cmpxchgb %[_src], %[_dest]",\
-				"setz %[_success]"\
+				__asm_list__(__asm_inout__(dest, m), __asm_out__(success, m)),\
+				__asm_list__(__asm_in__(expected, a), __asm_in__(src, r)),\
+				"lock cmpxchgb %" __asm_var__(src) ", %" __asm_var__(dest),\
+				"setz %" __asm_var__(success)\
 		)
 
 #define __cmpxchgw__(dest, expected, src, prev)\
 		__asm_inline__(volatile, var)(\
 				__asm_list__("memory", "cc"),\
-				__asm_list__(__asm_in__(_expected, a, (uint16_t)expected), __asm_in__(_src, r, (uint16_t)src)),\
-				__asm_list__(__asm_inout__(_dest, m, dest), __asm_out__(_prev, m, prev)),\
-				"lock cmpxchgw %[_src], %[_dest]",\
-				"movw %%ax, %[_prev]"\
+				__asm_list__(__asm_inout__(dest, m), __asm_out__(prev, m)),\
+				__asm_list__(__asm_in__(expected, a), __asm_in__(src, r)),\
+				"lock cmpxchgw %" __asm_var__(src) ", %" __asm_var__(dest),\
+				"movw %%ax, %" __asm_var__(prev)\
 		)
 
 #define __casw__(dest, expected, src, success)\
 		__asm_inline__(volatile, var)(\
 				__asm_list__("memory", "cc"),\
-				__asm_list__(__asm_in__(_expected, a, (uint16_t)expected), __asm_in__(_src, r, (uint16_t)src)),\
-				__asm_list__(__asm_inout__(_dest, m, dest), __asm_out__(_success, m, success)),\
-				"lock cmpxchgw %[_src], %[_dest]",\
-				"setz %[_success]"\
+				__asm_list__(__asm_inout__(dest, m), __asm_out__(success, m)),\
+				__asm_list__(__asm_in__(expected, a), __asm_in__(src, r)),\
+				"lock cmpxchgw %" __asm_var__(src) ", %" __asm_var__(dest),\
+				"setz %" __asm_var__(success)\
 		)
 
 #define __cmpxchgl__(dest, expected, src, prev)\
 		__asm_inline__(volatile, var)(\
 				__asm_list__("memory", "cc"),\
-				__asm_list__(__asm_in__(_expected, a, (uint32_t)expected), __asm_in__(_src, r, (uint32_t)src)),\
-				__asm_list__(__asm_inout__(_dest, m, dest), __asm_out__(_prev, m, prev)),\
-				"lock cmpxchgl %[_src], %[_dest]",\
-				"movl %%eax, %[_prev]"\
+				__asm_list__(__asm_inout__(dest, m), __asm_out__(prev, m)),\
+				__asm_list__(__asm_in__(expected, a), __asm_in__(src, r)),\
+				"lock cmpxchgl %" __asm_var__(src) ", %" __asm_var__(dest),\
+				"movl %%eax, %" __asm_var__(prev)\
 		)
 
 #define __casl__(dest, expected, src, success)\
 		__asm_inline__(volatile, var)(\
 				__asm_list__("memory", "cc"),\
-				__asm_list__(__asm_in__(_expected, a, (uint32_t)expected), __asm_in__(_src, r, (uint32_t)src)),\
-				__asm_list__(__asm_inout__(_dest, m, dest), __asm_out__(_success, m, success)),\
-				"lock cmpxchgl %[_src], %[_dest]",\
-				"setz %[_success]"\
+				__asm_list__(__asm_inout__(dest, m), __asm_out__(success, m)),\
+				__asm_list__(__asm_in__(expected, a), __asm_in__(src, r)),\
+				"lock cmpxchgl %" __asm_var__(src) ", %" __asm_var__(dest),\
+				"setz %" __asm_var__(success)\
 		)
 
 #define __cmpxchgq__(dest, expected, src, prev)\
 		__asm_inline__(volatile, var)(\
 				__asm_list__("memory", "cc"),\
-				__asm_list__(__asm_in__(_expected, a, (uint64_t)expected), __asm_in__(_src, r, (uint64_t)src)),\
-				__asm_list__(__asm_inout__(_dest, m, dest), __asm_out__(_prev, m, prev)),\
-				"lock cmpxchgq %[_src], %[_dest]",\
-				"movq %%rax, %[_prev]"\
+				__asm_list__(__asm_inout__(dest, m), __asm_out__(prev, m)),\
+				__asm_list__(__asm_in__(expected, a), __asm_in__(src, r)),\
+				"lock cmpxchgq %" __asm_var__(src) ", %" __asm_var__(dest),\
+				"movq %%rax, %" __asm_var__(prev)\
 		)
 
 #define __casq__(dest, expected, src, success)\
 		__asm_inline__(volatile, var)(\
 				__asm_list__("memory", "cc"),\
-				__asm_list__(__asm_in__(_expected, a, (uint64_t)expected), __asm_in__(_src, r, (uint64_t)src)),\
-				__asm_list__(__asm_inout__(_dest, m, dest), __asm_out__(_success, m, success)),\
-				"lock cmpxchgq %[_src], %[_dest]",\
-				"setz %[_success]"\
+				__asm_list__(__asm_inout__(dest, m), __asm_out__(success, m)),\
+				__asm_list__(__asm_in__(expected, a), __asm_in__(src, r)),\
+				"lock cmpxchgq %" __asm_var__(src) ", %" __asm_var__(dest),\
+				"setz %" __asm_var__(success)\
 		)
 #endif
 
@@ -368,6 +379,8 @@ __attribute__((always_inline)) inline void __jmp(void* target_ip)
 	__jmp__(target_ip);
 }
 
+#if defined(__ARCH_X86_64__) || defined(__ARCH_X86__)
+
 /**
  * @brief 读FS寄存器
  */
@@ -398,12 +411,34 @@ __attribute__((always_inline)) inline void __wfs(uint64_t offset, void* value)
 #endif
 }
 
+
+__attribute__((always_inline)) inline void* __rdgsbase()
+{
+	void* base;
+	__asm_inline__(volatile, var)(
+			__asm_list__(),
+			__asm_list__(__asm_out__(base, m)),
+			__asm_list__(),
+			"rdgsbase %" __asm_var__(base)
+	);
+	return base;
+}
+
 /**
- * @brief 读GS寄存器
+ * @brief 读GS寄存器中的指针
  */
+__attribute__((always_inline)) inline void* __rgs(uint32_t offset)
+{
+	void* gsv;
 #if defined(__ARCH_X86_64__)
-#define __rgs(gsv, offset) __stsriq__(gsv, %gs, offset);
+	__stsrq32__(gsv, %gs, offset);
+#elif defined(__ARCH_X86__)
+	__stsrl32__(gsv, %gs, offset);
+#elif defined(__ARCH_AARCH_64__)
+
 #endif
+	return gsv;
+}
 
 /**
  * @brief 写GS寄存器
@@ -418,6 +453,8 @@ __attribute__((always_inline)) inline void __wgs(uint64_t offset, void* value)
 
 #endif
 }
+
+#endif
 
 /**
  * @brief 机器的栈，栈是反向生长的，栈顶在低地址，栈底在高地址

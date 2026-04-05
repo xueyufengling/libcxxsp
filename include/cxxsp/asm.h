@@ -12,12 +12,15 @@ namespace cxxsp
 {
 /**
  * 具有约束字符的输入、输出变量声明
+ * 不使用__va_macro__()是因为__asm_in__()等宏展开中会多次出现__va_macro__()进而导致被paint-blue无法继续展开
  */
 #define __asm_constraint__(asm_var_name, constraint, value)\
 	__if_else__(__is_empty__(asm_var_name))(\
 		__str__(constraint) (value),\
 		[asm_var_name] __str__(constraint) (value)\
 	)
+
+#define __asm_var__(asm_var_name) __str__([asm_var_name])
 
 /**
  * @brief 只读的asm输入变量
@@ -30,6 +33,8 @@ namespace cxxsp
 //支持所有约束，例如立即数
 #define __asm_in__3(asm_var_name, constraint, value) __asm_constraint__(asm_var_name, constraint, value)
 #define __asm_in__(...) __va_macro__(__asm_in__, __VA_ARGS__)
+//输入占位符
+#define __asm_inp__(constraint, value) __asm_constraint__(, constraint, value)
 
 /**
  * @brief 可交换次序的asm输入变量，不能是最后一个输入变量
@@ -37,6 +42,7 @@ namespace cxxsp
 #define __asm_inxchg__2(var_name, constraint) __asm_inxchg__3(var_name, constraint, var_name)
 #define __asm_inxchg__3(asm_var_name, constraint, value) __asm_constraint__(asm_var_name, %constraint, value)
 #define __asm_inxchg__(...) __va_macro__(__asm_inxchg__, __VA_ARGS__)
+#define __asm_inxchgp__(constraint, value) __asm_constraint__(, %constraint, value)
 
 /**
  * @brief 只写的asm输出变量
@@ -44,6 +50,7 @@ namespace cxxsp
 #define __asm_out__2(var_name, constraint) __asm_out__3(var_name, constraint, var_name)
 #define __asm_out__3(asm_var_name, constraint, var_name) __asm_constraint__(asm_var_name, =&constraint, var_name)
 #define __asm_out__(...) __va_macro__(__asm_out__, __VA_ARGS__)
+#define __asm_outp__(constraint, var_name) __asm_constraint__(, =&constraint, var_name)
 
 /**
  * @brief 可读也可写的输入同时也是输出变量
@@ -51,6 +58,7 @@ namespace cxxsp
 #define __asm_inout__2(var_name, constraint) __asm_inout__3(var_name, constraint, var_name)
 #define __asm_inout__3(asm_var_name, constraint, var_name) __asm_constraint__(asm_var_name, +constraint, var_name)
 #define __asm_inout__(...) __va_macro__(__asm_inout__, __VA_ARGS__)
+#define __asm_inoutp__(constraint, var_name) __asm_constraint__(, +constraint, var_name)
 
 /**
  * @brief asm拓展的列表必须写入此宏内，即输入列表、输出列表、破坏寄存器列表、跳转标签列表
@@ -68,7 +76,7 @@ namespace cxxsp
  * __asm__内联并不是完全只内联体内的指令，也会自动生成所使用了的寄存器的保存和恢复（现场恢复）相关mov指令
  * 相比于inline函数，__asm__内联少了参数、局部变量的栈空间和栈变量初始化、参数传递相关的指令。
  */
-#define __asm_def__(asm_modifiers, clobber_list, asm_in_list, asm_out_list, ...)\
+#define __asm_def__(asm_modifiers, clobber_list, asm_out_list, asm_in_list, ...)\
 		__asm__ __replace_delim__(, asm_modifiers())(\
 			__replace_delim__("\n\t", __VA_ARGS__)\
 			__if_else__(__or__(__equal__(asm_modifiers, __asm_modifiers_goto__), __equal__(asm_modifiers, __asm_modifiers_volatile_goto__)))(\
@@ -82,10 +90,10 @@ namespace cxxsp
 			)\
 		)
 
-#define __asm_inline__optimized_var(clobber_list, asm_in_list, asm_out_list, ...) __asm_def__(__asm_modifiers_none__, __pack_list__(clobber_list), __pack_list__(asm_in_list), __pack_list__(asm_out_list), ##__VA_ARGS__)
-#define __asm_inline__volatile_var(clobber_list, asm_in_list, asm_out_list, ...) __asm_def__(__asm_modifiers_volatile__, __pack_list__(clobber_list), __pack_list__(asm_in_list), __pack_list__(asm_out_list), ##__VA_ARGS__)
-#define __asm_inline__optimized_jmp(clobber_list, asm_in_list, asm_out_list, ...) __asm_def__(__asm_modifiers_goto__, __pack_list__(clobber_list), __pack_list__(asm_in_list), __pack_list__(asm_out_list), ##__VA_ARGS__)
-#define __asm_inline__volatile_jmp(clobber_list, asm_in_list, asm_out_list, ...) __asm_def__(__asm_modifiers_volatile_goto__, __pack_list__(clobber_list), __pack_list__(asm_in_list), __pack_list__(asm_out_list), ##__VA_ARGS__)
+#define __asm_inline__optimized_var(clobber_list, asm_out_list, asm_in_list, ...) __asm_def__(__asm_modifiers_none__, __pack_list__(clobber_list), __pack_list__(asm_out_list), __pack_list__(asm_in_list), ##__VA_ARGS__)
+#define __asm_inline__volatile_var(clobber_list, asm_out_list, asm_in_list, ...) __asm_def__(__asm_modifiers_volatile__, __pack_list__(clobber_list), __pack_list__(asm_out_list), __pack_list__(asm_in_list), ##__VA_ARGS__)
+#define __asm_inline__optimized_jmp(clobber_list, asm_out_list, asm_in_list, ...) __asm_def__(__asm_modifiers_goto__, __pack_list__(clobber_list), __pack_list__(asm_out_list), __pack_list__(asm_in_list), ##__VA_ARGS__)
+#define __asm_inline__volatile_jmp(clobber_list, asm_out_list, asm_in_list, ...) __asm_def__(__asm_modifiers_volatile_goto__, __pack_list__(clobber_list), __pack_list__(asm_out_list), __pack_list__(asm_in_list), ##__VA_ARGS__)
 
 /**
  * @brief 内联汇编指令
@@ -94,8 +102,8 @@ namespace cxxsp
  * @details 例如以下示例
  * 			__asm_inline__(volatile, var)(
  * 				__asm_list__("%eax", "cc"),
- * 				__asm_list__(__asm_in__(instant_val, i, 1), __asm_in__(c_var, r)),
  * 				__asm_list__(__asm_out__(result, r)),
+ * 				__asm_list__(__asm_in__(instant_val, i, 1), __asm_in__(c_var, r)),
  * 				"mov %[instant_val], %%eax",
  * 				"add %[c_var], %%eax",
  * 				"mov %%eax, %[result]"
