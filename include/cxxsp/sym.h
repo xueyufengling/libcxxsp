@@ -8,6 +8,13 @@
 #include <tplmp/tplmp.h>
 #include <typeinfo>
 
+#include <cxxsp/arch.h>
+
+#if defined(__OS_WIN__)
+#include <windows.h>
+#elif defined(__OS_UNIX__)
+#endif
+
 namespace cxxsp
 {
 /**
@@ -26,6 +33,14 @@ __attribute__((always_inline)) inline char* cxx_name_demangling()
 {
 	return cxx_name_demangling(typeid(tplmp::decl<_T>::ref()));
 }
+
+#if defined(__OS_WIN__)
+
+int __win_find_addr_export_ordinal(IMAGE_DOS_HEADER* dos_header, long long target_offset);
+
+int __win_find_ordinal_export_name_idx(IMAGE_DOS_HEADER* dos_header, int ordinal);
+
+#endif
 
 /**
  * 符号相关信息

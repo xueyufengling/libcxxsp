@@ -66,38 +66,6 @@ LDR_DATA_TABLE_ENTRY* cxxsp::__win_peb_load_order_module(PEB* peb, int load_orde
 
 #endif
 
-exec_memory exec_memory::alloc(size_t size)
-{
-	exec_memory mem;
-	mem.mem_size = size;
-#if defined(__OS_WIN__)
-	mem.mem = ::VirtualAlloc(
-	NULL, size,
-	MEM_COMMIT | MEM_RESERVE,
-	PAGE_EXECUTE_READWRITE
-			);
-#elif defined(__OS_UNIX__)
-	mem.mem= mmap(
-			NULL, size,
-			PROT_EXEC | PROT_READ | PROT_WRITE,
-			MAP_PRIVATE | MAP_ANONYMOUS,
-			-1, 0
-	);
-#endif
-	return mem;
-}
-
-void exec_memory::free()
-{
-#if defined(__OS_WIN__)
-	::VirtualFree(mem, 0, MEM_RELEASE);
-#elif defined(__OS_UNIX__)
-	munmap(mem, mem_size);
-#endif
-	mem = nullptr;
-	mem_size = 0;
-}
-
 /**
  * @brief 强制关闭内联且必须生成栈帧，关闭优化，防止构造函数没有栈帧导致错误。
  * 		  如果不强制保留栈帧指针rbp，则构造函数序言为

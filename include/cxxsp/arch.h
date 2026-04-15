@@ -14,6 +14,10 @@
 
 //x86 32位
 #if defined(__i386__) || defined(__i386) || defined(i386) || defined(_M_IX86) || defined(_M_I86) || defined(__IA32__) || defined(__X86__) || defined(_X86_)
+#define __ARCH_X86_32__
+#endif
+
+#if defined(__ARCH_X86_32__) || defined(__ARCH_X86_64__)
 #define __ARCH_X86__
 #endif
 
@@ -47,6 +51,8 @@
 #if defined(__unix__) || defined(__unix) || defined(unix)
 #define __OS_UNIX__
 #endif
+
+#define __OS_PAGE_SIZE__ ((unsigned int)0x1000)
 
 // 操作系统保留内存，所有系统均保留第一页（地址0~4095）
 #define __OS_RESERVED_ADDR__ ((void*)0x0FFF)

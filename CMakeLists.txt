@@ -1,20 +1,40 @@
 cmake_minimum_required (VERSION 3.10)
 
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED OFF)
+
 project(cxxsp)
 
 find_package(ppmp REQUIRED)
 find_package(tplmp REQUIRED)
+find_package(llvmmci REQUIRED)
 
 set(PROJECT_SOURCE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 set(SOURCE_DIR "${CMAKE_SOURCE_DIR}/src")
-file(GLOB_RECURSE SOURCES "${SOURCE_DIR}/*.cpp")
+file(GLOB_RECURSE SOURCES "${SOURCE_DIR}/*.cpp" "${SOURCE_DIR}/*.S")
+
+enable_language(ASM)
 
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
 target_include_directories(${PROJECT_NAME} PUBLIC "${ppmp_INCLUDE_DIRS}")
 target_include_directories(${PROJECT_NAME} PUBLIC "${tplmp_INCLUDE_DIRS}")
+target_include_directories(${PROJECT_NAME} PUBLIC "${llvmmci_INCLUDE_DIRS}")
 target_include_directories(${PROJECT_NAME} PUBLIC "${PROJECT_SOURCE_INCLUDE_DIRS}")
+
+set(link_libs)
+
+# Link filesystem
+if(MINGW)
+	list(APPEND link_libs "stdc++fs")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+	if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
+		list(APPEND link_libs "stdc++fs")
+	endif()
+endif()
+
+target_link_libraries(${PROJECT_NAME} PUBLIC ${link_libs})
 
 # Install
  

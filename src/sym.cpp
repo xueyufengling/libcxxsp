@@ -29,7 +29,7 @@ char* cxxsp::cxx_name_demangling(const char* mangled_name)
  * @param export_entries 导出条目的指针
  * @param 目标偏移量，即符号地址-dll加载基地址
  */
-static int __win_find_addr_export_ordinal(IMAGE_DOS_HEADER* dos_header, long long target_offset)
+int cxxsp::__win_find_addr_export_ordinal(IMAGE_DOS_HEADER* dos_header, long long target_offset)
 {
 	unsigned char* base = (unsigned char*)dos_header;
 	IMAGE_NT_HEADERS* nt_header = (IMAGE_NT_HEADERS*)(base + dos_header->e_lfanew); //base指针实际指向DOS头，通过DOS头访问NT头
@@ -58,7 +58,7 @@ static int __win_find_addr_export_ordinal(IMAGE_DOS_HEADER* dos_header, long lon
 	}
 }
 
-static int __win_find_ordinal_export_name_idx(IMAGE_DOS_HEADER* dos_header, int ordinal)
+int cxxsp::__win_find_ordinal_export_name_idx(IMAGE_DOS_HEADER* dos_header, int ordinal)
 {
 	unsigned char* base = (unsigned char*)dos_header;
 	IMAGE_NT_HEADERS* nt_header = (IMAGE_NT_HEADERS*)(base + dos_header->e_lfanew);

@@ -35,35 +35,6 @@ extern LDR_DATA_TABLE_ENTRY* __win_peb_load_order_module(PEB* peb, int load_orde
 #endif
 
 /**
- * @brief 拥有执行权限的内存，内存区间内的机器码可以执行。
- * 		  标准库的内存分配只能分配具有RW权限的数据内存，无法分配具有E权限的可执行内存，这必须依赖操作系统API。
- */
-class exec_memory
-{
-private:
-	void* mem = nullptr;
-	size_t mem_size = 0;
-
-	exec_memory() = default;
-
-public:
-	static exec_memory alloc(size_t size);
-
-	template<typename _T>
-	inline operator _T*()
-	{
-		return (_T*)mem;
-	}
-
-	inline size_t size()
-	{
-		return mem_size;
-	}
-
-	void free();
-};
-
-/**
  * @brief 栈帧回溯
  */
 class call_stack
