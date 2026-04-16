@@ -110,6 +110,14 @@ namespace cxxsp
 			"movq %" __str__(src) ", %" __asm_var__(dest)\
 		)
 
+#define __stidt__(dest)\
+		__asm_inline__(volatile, var)(\
+			__asm_list__(),\
+			__asm_list__(),\
+			__asm_list__(__asm_inp__(r, (void*)dest)),\
+			"sidt %0"\
+		)
+
 /**
  * @brief 读段寄存器，寄存器以%开头
  * 		  有效段寄存器为CS, SS, DS, ES, FS, GS
@@ -411,7 +419,6 @@ __attribute__((always_inline)) inline void __wfs(uint64_t offset, void* value)
 #endif
 }
 
-
 __attribute__((always_inline)) inline void* __rdgsbase()
 {
 	void* base;
@@ -485,7 +492,7 @@ typedef struct frame
 	{
 		return (unsigned char*)caller - (unsigned char*)this; //两个栈底之间的距离即栈帧空间
 	}
-} frame;
+} __attribute__((packed)) frame;
 
 /**
  * @brief 当前栈底，即当前的栈帧。当前栈底的地址正是caller栈顶的地址。
@@ -527,6 +534,28 @@ __attribute__((always_inline)) inline void* __sp()
 __attribute__((always_inline)) inline long long callee_size()
 {
 	return (unsigned char*)__bp() - (unsigned char*)__sp();
+}
+
+}
+
+/**
+ * @brief CPU硬中断
+ */
+namespace _int
+{
+// Interrupt Descriptor Table
+typedef struct idt
+{
+	uint16_t limit = 0;
+	void* base = nullptr;
+} __attribute__((packed)) idt;
+
+__attribute__((always_inline)) inline void __sidt(idt* t)
+{
+#if defined(__ARCH_X86__)
+	__stidt__(t);
+#elif defined(__ARCH_AARCH_64__)
+#endif
 }
 
 }

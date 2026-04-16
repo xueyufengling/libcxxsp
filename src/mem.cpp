@@ -94,35 +94,41 @@ void* cxxsp::os_allocate_memory(void* base, size_t size, memory_flag flags)
 long cxxsp::syscall_allocate_memory(void*& base, size_t& size, memory_flag flags)
 {
 #if defined(__OS_WIN__)
-	static syscall_t NtAllocateVirtualMemory = cxxsp::syscall("NtAllocateVirtualMemory");
-	return NtAllocateVirtualMemory(
+	return cxxsp::mem_alloc_syscall(
 			::GetCurrentProcess(), //当前进程
 			&base,
 			(ULONG_PTR)0,
 			(PSIZE_T)&size,
 			__to_os_mem_flags(flags),
 			__to_os_mem_protect(flags));
+#elif defined(__OS_UNIX__)
+	return errno;
 #endif
 }
 
-os_memory os_memory::os_alloc(void* base, size_t size, memory_flag flags)
+os_memory* os_memory::os_alloc(void* base, size_t size, memory_flag flags)
 {
-	os_memory mem;
 	size_t* os_mem = (size_t*)os_allocate_memory(base, sizeof(size_t) + size, flags);
 	*os_mem = size;
-	mem.mem = os_mem + 1;
-	return mem;
+	return (os_memory*)(os_mem + 1);
 }
 
-os_memory os_memory::syscall_alloc(void* base, size_t size, memory_flag flags)
+os_memory* os_memory::syscall_alloc(void* base, size_t size, memory_flag flags)
 {
-	os_memory mem;
 	size_t actual_size = sizeof(size_t) + size; //右边为期望大小，分配实际大小可能大于此值
-	syscall_allocate_memory(mem.mem, actual_size, flags);
-	size_t* os_mem = (size_t*)mem.mem;
-	*os_mem = actual_size;
-	mem.mem = os_mem + 1;
-	return mem;
+	long ret = syscall_allocate_memory(base, actual_size, flags);
+#if defined(__OS_WIN__)
+	if(ret)
+	{
+		return nullptr; //windows下分配失败返回错误码，成功返回0
+	}
+	else
+	{
+		size_t* os_mem = (size_t*)base;
+		*os_mem = actual_size;
+		return (os_memory*)(os_mem + 1);
+	}
+#endif
 }
 
 void os_memory::free()
@@ -132,5 +138,4 @@ void os_memory::free()
 #elif defined(__OS_UNIX__)
 	munmap(header(), size());
 #endif
-	mem = nullptr;
 }

@@ -69,25 +69,28 @@ long syscall_allocate_memory(void*& base, size_t& size, memory_flag flags = memo
 /**
  * @brief 操作系统内存包装，应当使用此API进行操作系统的内存分配
  */
-class os_memory
+struct os_memory
 {
-private:
-	void* mem = nullptr;
+	os_memory() = delete;
 
-public:
-	static os_memory os_alloc(void* base, size_t size, memory_flag flags = memory_flag::MEM_PROT_RWX);
+	inline ~os_memory()
+	{
+		free();
+	}
 
-	static os_memory syscall_alloc(void* base, size_t size, memory_flag flags = memory_flag::MEM_PROT_RWX);
+	static os_memory* os_alloc(void* base, size_t size, memory_flag flags = memory_flag::MEM_PROT_RWX);
+
+	static os_memory* syscall_alloc(void* base, size_t size, memory_flag flags = memory_flag::MEM_PROT_RWX);
 
 	template<typename _T>
 	inline operator _T*()
 	{
-		return (_T*)mem;
+		return (_T*)this;
 	}
 
 	inline void* header()
 	{
-		return (size_t*)mem - 1;
+		return (size_t*)this - 1;
 	}
 
 	inline size_t size()

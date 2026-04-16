@@ -1,13 +1,12 @@
 #include "syscall_tpl.h"
 
-#位置无关的syscall调用函数
-
 .text:
 
 .globl __syscall_tpl
 
 #if defined(__OS_WIN64__)
 
+#位置无关的syscall调用函数，参考ntdll.dll反汇编结果
 __syscall_tpl:
 	movq %rcx, %r10															#Windows调用约定参数为rcx, rdx, r8, r9，剩余参数压栈；syscall调用约定为r10, rdx, r8, r9，剩余参数压栈.因此需要手动将函数参数rcx移入syscall参数寄存器r10
 	movl $__SYSCALL_NUM_PLACEHOLDER__, %eax									#移入调用号
