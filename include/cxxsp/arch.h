@@ -5,16 +5,19 @@
 
 #if defined(__alpha__) || defined(__alpha) || defined(_M_ALPHA)
 #define __ARCH_ALPHA__
+#define __REG_SIZE__ 8
 #endif
 
 //x86 64位
 #if defined(__x86_64__) || defined(__x86_64) || defined(_M_X64) || defined(__amd64__) || defined(__amd64)
 #define __ARCH_X86_64__
+#define __REG_SIZE__ 8
 #endif
 
 //x86 32位
 #if defined(__i386__) || defined(__i386) || defined(i386) || defined(_M_IX86) || defined(_M_I86) || defined(__IA32__) || defined(__X86__) || defined(_X86_)
 #define __ARCH_X86_32__
+#define __REG_SIZE__ 4
 #endif
 
 #if defined(__ARCH_X86_32__) || defined(__ARCH_X86_64__)
@@ -26,14 +29,17 @@
 //ARM 64位
 #if defined(__aarch64__) || defined(_M_ARM64)
 #define __ARCH_AARCH_64__
+#define __REG_SIZE__ 8
 #else
 //ARM 32位
 #define __ARCH_AARCH_32__
+#define __REG_SIZE__ 4
 #endif
 #endif
 
 #if defined(__powerpc) || defined(__powerpc__) || defined(__powerpc64__) || defined(__POWERPC__) || defined(__ppc__) || defined(__ppc64__) || defined(__PPC__) || defined(__PPC64__) || defined(_ARCH_PPC) || defined(_ARCH_PPC64) || defined(_M_PPC)
 #define __ARCH_POWERPC_64__
+#define __REG_SIZE__ 8
 #endif
 
 // ***** 操作系统 *****
@@ -42,10 +48,11 @@
 #define __OS_WIN__
 #if defined (_WIN64)
 #define __OS_WIN64__
+#define __LP_SIZE__ 8
 #else
 #define __OS_WIN32__
+#define __LP_SIZE__ 4
 #endif
-
 #endif
 
 #if defined(__unix__) || defined(__unix) || defined(unix)

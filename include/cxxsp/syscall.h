@@ -39,11 +39,12 @@ extern syscall_t mem_alloc_syscall; //内存分配函数的syscall
  * @brief 根据调用号在指定内存位置构造一个syscall函数。
  * 		  该内存必须有执行权限才能调用。
  */
-extern syscall_t syscall(void* mem, long syscall_num);
+extern syscall_t syscall(void* mem, long syscall_num, unsigned short syscall_clean = 0);
 
 /**
  * @brief 根据调用号构造一个syscall函数，如果已经获取过该函数则返回缓存副本
- * 		  直接使用syscall指令进行内存分配，如果操作系统库被注入，此函数也不会受到影响
+ * 		  直接使用syscall指令进行内存分配，如果操作系统ring3库被注入，此函数也不会受到影响，但如果内核层ring0被注入，此函数亦将受影响.
+ * 		  内核层注入属于最危险的漏洞，操作系统开发者几乎肯定会在未来的新版本中修复，因此本库只考虑绕开ring3的注入。
  */
 extern syscall_t syscall(long syscall_num);
 

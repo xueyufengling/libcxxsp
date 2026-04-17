@@ -7,8 +7,15 @@
 
 using namespace cxxsp;
 
+// syscall_tpl.S导出符号
 extern "C"
 {
+//.rodata
+extern const long __syscall_no_offset; //调用号的偏移量
+extern const long __syscall_size; //syscall函数大小
+extern const long __syscall_cl_offset;
+
+//.text
 syscall_ret_t __syscall_tpl(...);
 }
 
@@ -16,15 +23,13 @@ syscall_t cxxsp::mem_alloc_syscall = nullptr;
 
 //非基本类型或指针的全局变量需要调用构造函数，属于动态初始化，在静态初始化之后执行，这期间动态初始化、constructor都会执行，因此需要设定好优先级以先执行动态初始化
 static uint8_t* syscall_tpl_addr = (uint8_t*)(&__syscall_tpl); //syscall模板函数体的地址
-static uint64_t syscall_size = 0; //syscall函数大小
-static uint64_t syscall_num_offset = 0; //调用号的偏移量
 __attribute__((init_priority(101))) static std::unordered_map<std::string, int> syscall_nums;
 __attribute__((init_priority(101))) static std::unordered_map<std::string, syscall_t> syscalls_by_name;
 __attribute__((init_priority(101))) static std::unordered_map<int, syscall_t> syscalls_by_num;
 
 static inline syscall_t __build_os_syscall(long syscall_num)
 {
-	return syscall(os_memory::os_alloc(nullptr, syscall_size, memory_flag::MEM_PROT_RWX), syscall_num);
+	return syscall(os_memory::os_alloc(nullptr, __syscall_size, memory_flag::MEM_PROT_RWX), syscall_num);
 }
 
 static inline syscall_t __build_os_syscall(const char* name)
@@ -34,20 +39,12 @@ static inline syscall_t __build_os_syscall(const char* name)
 
 static inline syscall_t __build_syscall(long syscall_num)
 {
-	return syscall(os_memory::syscall_alloc(nullptr, syscall_size, memory_flag::MEM_PROT_RWX), syscall_num);
+	return syscall(os_memory::syscall_alloc(nullptr, __syscall_size, memory_flag::MEM_PROT_RWX), syscall_num);
 }
 
 //初始化syscall。llvmmci.so库必须在此函数之前先加载，如果使用导入表，则操作系统保证so库先于本库初始化
 __attribute__((constructor(101))) void __init_syscall()
 {
-	uint64_t syscall_tpl_base = (uint64_t)syscall_tpl_addr;
-	syscall_size = disassembler_find_return(host_disassembler, syscall_tpl_addr, __OS_PAGE_SIZE__, syscall_tpl_base, 2) - syscall_tpl_base + 1; //windows下第二个ret才是函数结尾
-	for(; syscall_num_offset < syscall_size; ++syscall_num_offset)
-	{
-		uint8_t* addr = syscall_tpl_addr + syscall_num_offset;
-		if(*(int*)addr == __SYSCALL_NUM_PLACEHOLDER__)
-			break;
-	}
 	retrieve_syscall_nums(syscall_nums);
 	//全局内存分配函数
 	//使用操作系统API分配NtAllocateVirtualMemory函数内存作为启动点，后续分配内存都只通过此全局函数指针分配
@@ -106,7 +103,7 @@ void cxxsp::retrieve_syscall_nums(std::unordered_map<std::string, int>& syscall_
 	for(auto& sc : syscall_addrs)
 	{
 		uint64_t func_base = (uint64_t)(sc.second);
-		uint64_t func_size = disassembler_find_return(host_disassembler, sc.second, __OS_PAGE_SIZE__, func_base, 1) - func_base + 1; //函数长度，最长支持__OS_PAGE_SIZE__
+		uint64_t func_size = disassembler_find_return(host_disassembler, sc.second, __OS_PAGE_SIZE__, func_base, __SYSCALL_RET_NUM__) - func_base + 1; //函数长度，最长支持__OS_PAGE_SIZE__
 		array* src = disassemble_text(host_disassembler, sc.second, func_size, func_base);
 		std::regex pattern(R"(movl?\s*\$(\d+),\s*%[er]ax[\s\S]*?syscall)", //提取syscall前最后一个mov $xxx, %eax中的xxx，即调用号
 				std::regex::ECMAScript | std::regex::icase); //跨行匹配
@@ -125,10 +122,12 @@ int cxxsp::syscall_num(const char* name)
 	return syscall_nums[name];
 }
 
-syscall_t cxxsp::syscall(void* mem, long syscall_num)
+syscall_t cxxsp::syscall(void* mem, long syscall_num, unsigned short syscall_clean)
 {
-	memcpy(mem, syscall_tpl_addr, syscall_size); //每个调用号都有自己的syscall函数内存
-	*(int*)((uint8_t*)mem + syscall_num_offset) = syscall_num; //替换模板中的syscall number
+	memcpy(mem, syscall_tpl_addr, __syscall_size); //每个调用号都有自己的syscall函数内存
+	*(int*)((uint8_t*)mem + __syscall_no_offset) = syscall_num; //替换模板中的syscall number
+	if(__syscall_cl_offset)
+		*(unsigned short*)((uint8_t*)mem + __syscall_cl_offset) = syscall_clean; //如果需要自己清理栈，则填充清理的大小
 	return (syscall_t)mem;
 }
 

@@ -15,6 +15,7 @@ set(SOURCE_DIR "${CMAKE_SOURCE_DIR}/src")
 file(GLOB_RECURSE SOURCES "${SOURCE_DIR}/*.cpp" "${SOURCE_DIR}/*.S")
 
 enable_language(ASM)
+add_compile_options(-g -O0)
 
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
